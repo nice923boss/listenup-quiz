@@ -16,7 +16,7 @@
 二擇一：
 
 1. **本機**：在 APP 資料夾雙擊 `index.html`，用 Chrome 或 Edge 開啟。不需要網路（字型除外，見「離線使用」）。
-2. **網址**：部署到 GitHub Pages 後，開啟 `https://<GitHub 帳號>.github.io/listenup-quiz/`。
+2. **網址**：開啟 <https://nice923boss.github.io/listenup-quiz/>。
 
 第一次開啟會出現操作導覽；之後可以在「設定」頁按「重看導覽」。
 
@@ -152,7 +152,7 @@
 5. 等檔案列表跑完，下方按「Commit changes」。
 6. 到儲存庫上方的「Settings」→ 左側「Pages」。
 7. 「Build and deployment」的 Source 選「Deploy from a branch」，Branch 選 `main`，資料夾選 `/ (root)`，按「Save」。
-8. 等 1～5 分鐘，重新整理 Pages 設定頁，上方會出現網址：`https://<GitHub 帳號>.github.io/listenup-quiz/`。
+8. 等 1～5 分鐘，重新整理 Pages 設定頁，上方會出現網址：<https://nice923boss.github.io/listenup-quiz/>。
 9. 用 Chrome 或 Edge 開啟網址確認可以使用。
 
 之後要更新程式：重複第 3～5 步上傳新檔案（同名檔案會被取代），GitHub 會自動重新部署。
