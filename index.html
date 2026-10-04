@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ListenUp Quiz</title>
+<script>
+  // Apply the saved theme before first paint to avoid a flash.
+  try { var t = localStorage.getItem('listenupquiz:v1:theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="vendor/driver.css">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/player.css">
+</head>
+<body>
+<div id="screen-app">
+  <header class="topbar">
+    <div class="brand"><i data-lucide="headphones"></i><span>ListenUp Quiz</span></div>
+    <nav class="tabs" role="tablist" aria-label="畫面">
+      <button class="tab is-active" role="tab" aria-selected="true" data-tab="editor"><i data-lucide="file-pen-line"></i>題目</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="settings"><i data-lucide="sliders-horizontal"></i>設定</button>
+    </nav>
+    <div class="topbar-actions">
+      <span class="dirty" id="dirty" hidden><i data-lucide="circle-dot"></i>有未儲存的變更</span>
+      <button class="btn" id="btn-save"><i data-lucide="save"></i>儲存</button>
+      <button class="btn" id="btn-export"><i data-lucide="folder-down"></i>下載專案</button>
+      <button class="btn" id="btn-import"><i data-lucide="folder-open"></i>載入資料夾</button>
+      <button class="btn btn-primary" id="btn-play"><i data-lucide="play"></i>播放</button>
+    </div>
+  </header>
+
+  <!-- ===== Editor tab ===== -->
+  <main class="page" id="tab-editor">
+    <section class="card exam-head">
+      <label class="field-label" for="exam-title">考卷標題（只顯示，不念出）</label>
+      <input class="input input-title" id="exam-title" placeholder="例如：五年級英語 第一次定期評量 聽力測驗">
+      <span class="exam-stats"></span>
+    </section>
+    <div class="sections" id="sections"></div>
+    <button class="btn btn-ghost add-section"><i data-lucide="plus"></i>新增大題</button>
+  </main>
+
+  <!-- ===== Settings tab ===== -->
+  <main class="page" id="tab-settings" hidden>
+    <div class="settings-grid">
+      <section class="card settings-card">
+        <h2><i data-lucide="audio-lines"></i>語音</h2>
+        <p>題目裡的英文用英文語音念，中文字用中文語音念；同一句中英穿插時會自動切換。</p>
+        <div class="voice-scan">
+          <i data-lucide="monitor-speaker"></i>
+          <span id="voice-scan-text"></span>
+          <button class="btn btn-sm" id="btn-rescan"><i data-lucide="refresh-cw"></i>重新偵測</button>
+        </div>
+        <div class="voice-row">
+          <label class="label" for="voice-en">英文語音</label>
+          <select class="input" id="voice-en"></select>
+          <button class="btn" data-preview="en"><i data-lucide="volume-2"></i>試聽</button>
+          <p class="hint">念題號、英文標題、題目中的英文。標「需要網路」的語音斷網時會改用本機語音。</p>
+        </div>
+        <div class="voice-row">
+          <label class="label" for="voice-enb">對話 B 角語音</label>
+          <select class="input" id="voice-enb"></select>
+          <button class="btn" data-preview="enB"><i data-lucide="volume-2"></i>試聽</button>
+          <p class="hint">對話題 B 角的英文。選不同聲音，學生才聽得出兩個人。</p>
+        </div>
+        <div class="voice-row">
+          <label class="label" for="voice-zh">中文語音</label>
+          <select class="input" id="voice-zh"></select>
+          <button class="btn" data-preview="zh"><i data-lucide="volume-2"></i>試聽</button>
+          <p class="hint">念中文說明，以及題目中穿插的中文字（A、B 角共用）。</p>
+        </div>
+        <div class="mixed-test">
+          <label class="label" for="mixed-text">中英穿插試聽</label>
+          <input class="input" id="mixed-text" value="Number 1. 請圈出 bathroom 這個字。">
+          <button class="btn" data-preview="mixed"><i data-lucide="volume-2"></i>試聽</button>
+          <span class="segs" id="mixed-segs"></span>
+        </div>
+        <div class="notice warn" id="voice-notice" hidden><i data-lucide="triangle-alert"></i><span></span></div>
+      </section>
+
+      <section class="card settings-card">
+        <h2><i data-lucide="timer"></i>播放節奏</h2>
+        <p>秒數範圍 0～60，可到小數點後 1 位；設為 0 就不停頓。</p>
+        <div class="num-grid" id="num-grid"></div>
+      </section>
+
+      <section class="card settings-card">
+        <h2><i data-lucide="list-ordered"></i>念題方式與畫面</h2>
+        <div class="switch-row"><div><div>念題號</div><div class="desc">格式 <span class="en">Number {n}.</span>，每個大題從 1 起算</div></div><label class="switch"><input type="checkbox" id="set-announce-number" aria-label="念題號"><span></span></label></div>
+        <div class="switch-row"><div><div>念大題標題</div><div class="desc">英文格式 <span class="en">Part {id}. {titleEn}</span></div></div>
+          <div class="segmented" id="seg-announce" role="group" aria-label="念大題標題"><button data-value="none" aria-pressed="false">不念</button><button data-value="en" aria-pressed="false">只念英文</button><button data-value="en+zh" aria-pressed="false">英文＋中文</button></div></div>
+        <div class="switch-row"><div><div>播放時顯示題目文字</div><div class="desc">投影時建議關閉，避免學生看到答案</div></div><label class="switch"><input type="checkbox" id="set-show-text" aria-label="播放時顯示題目文字"><span></span></label></div>
+        <div class="switch-row"><div><div>播放畫面動態背景</div><div class="desc">系統開啟「減少動態效果」時自動關閉</div></div><label class="switch"><input type="checkbox" id="set-animated-bg" aria-label="播放畫面動態背景"><span></span></label></div>
+        <div class="switch-row"><div><div>介面主題</div><div class="desc">只存在這個瀏覽器，不會寫進專案</div></div>
+          <div class="segmented" id="seg-theme" role="group" aria-label="介面主題"><button aria-pressed="true" data-theme-set="auto">跟隨系統</button><button aria-pressed="false" data-theme-set="light">亮色</button><button aria-pressed="false" data-theme-set="dark">暗色</button></div></div>
+        <div class="switch-row"><div><div>操作導覽</div><div class="desc">第一次開啟時會自動出現</div></div><button class="btn btn-sm" id="btn-tour"><i data-lucide="compass"></i>重看導覽</button></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- ===== Player screen (projected) ===== -->
+<div id="screen-player" hidden>
+  <canvas id="player-bg" class="player-bg" aria-hidden="true"></canvas>
+  <div class="player">
+    <header class="pl-top">
+      <button class="pl-icon" id="pl-back" aria-label="回到編輯" title="回到編輯"><i data-lucide="arrow-left"></i></button>
+      <div class="pl-exam"></div>
+      <button class="pl-icon" id="btn-list" aria-label="題目清單" title="題目清單"><i data-lucide="list"></i></button>
+    </header>
+
+    <div class="pl-banner" id="bg-warning" role="alert" hidden><i data-lucide="triangle-alert"></i><span>播放分頁目前在背景，瀏覽器會延後計時，間隔可能變長。請把這個分頁留在前景。</span></div>
+
+    <main class="pl-stage">
+      <div class="pl-section">
+        <span class="pl-part"></span>
+        <span class="pl-title-en"></span>
+        <span class="pl-title-zh"></span>
+      </div>
+      <div class="pl-number-wrap"><div class="pl-number" id="big-number"></div></div>
+      <div class="pl-status">
+        <div class="pl-pass"></div>
+        <div class="pl-speaking" id="state-speaking" aria-label="念題中"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="pl-countdown" id="state-countdown" hidden>
+          <div class="pl-ring">
+            <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="44"></circle><circle class="prog" id="ring-prog" cx="50" cy="50" r="44"></circle></svg>
+            <span class="pl-ring-num" id="ring-num"></span>
+          </div>
+          <span class="pl-countdown-label"></span>
+        </div>
+      </div>
+      <div class="pl-text is-hidden" id="pl-text"></div>
+    </main>
+
+    <footer class="pl-controls">
+      <div class="pl-progress"><span id="pl-count"></span><div class="pl-track"><div id="pl-bar"></div></div><span id="pl-sec"></span></div>
+      <div class="pl-buttons">
+        <button class="pl-btn" id="pl-stop" aria-label="停止" title="停止"><i data-lucide="square"></i></button>
+        <button class="pl-btn" id="pl-prev" aria-label="上一題" title="上一題"><i data-lucide="skip-back"></i></button>
+        <button class="pl-btn main" id="pl-main" aria-label="播放"><i data-lucide="play"></i></button>
+        <button class="pl-btn" id="pl-next" aria-label="下一題" title="下一題"><i data-lucide="skip-forward"></i></button>
+      </div>
+      <div class="pl-hint">空白鍵：播放／暫停</div>
+    </footer>
+  </div>
+
+  <aside class="pl-list" id="pl-list" hidden>
+    <h3>題目清單（點選從該題開始）<button class="pl-icon" id="btn-list-close" aria-label="關閉清單"><i data-lucide="x"></i></button></h3>
+    <div id="pl-list-groups"></div>
+  </aside>
+</div>
+
+<div class="credit">製作者：黃政文</div>
+
+<script src="vendor/lucide.min.js"></script>
+<script src="vendor/anime.umd.min.js"></script>
+<script src="vendor/Sortable.min.js"></script>
+<script src="vendor/sweetalert2.all.min.js"></script>
+<script src="vendor/rough-notation.iife.js"></script>
+<script src="vendor/fitty.min.js"></script>
+<script src="vendor/granim.min.js"></script>
+<script src="vendor/driver.js.iife.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script src="js/schema.js"></script>
+<script src="js/parser.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/speech.js"></script>
+<script src="js/player.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/ui-editor.js"></script>
+<script src="js/ui-settings.js"></script>
+<script src="js/ui-player.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

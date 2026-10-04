@@ -1,0 +1,8 @@
+# Publish only the app files listed in README "部署到 GitHub Pages"; everything else stays local.
+/*
+!/.gitignore
+!/index.html
+!/README.md
+!/css/
+!/js/
+!/vendor/
