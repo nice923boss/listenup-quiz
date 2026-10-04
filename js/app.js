@@ -85,7 +85,21 @@
     return null;
   }
 
-  // ---- save / export / import ----
+  // ---- clear / save / export / import ----
+
+  // Empties the editor only; settings stay, and the stored exam is replaced on the next 儲存.
+  async function clearExam() {
+    if (!(await ui.confirmDialog({
+      title: '清空目前的題目？',
+      text: '考卷標題與所有大題都會清除，設定不受影響。按「儲存」後才會覆蓋這個瀏覽器裡存的題目。',
+      confirmText: '清空',
+      danger: true,
+    }))) return;
+    editor.render(schema.emptyExam());
+    showTab('editor');
+    changed();
+    ui.toast('已清空題目');
+  }
 
   function save() {
     const data = collectAll();
@@ -188,6 +202,7 @@
     });
   }
 
+  $('#btn-clear').addEventListener('click', clearExam);
   $('#btn-save').addEventListener('click', save);
   $('#btn-export').addEventListener('click', exportProject);
   $('#btn-import').addEventListener('click', importProject);
