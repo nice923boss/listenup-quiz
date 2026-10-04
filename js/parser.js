@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
 
-  const TYPES = ['words', 'phonics', 'dialogue', 'sentences', 'passage'];
+  const TYPES = ['words', 'phonics', 'dialogue', 'picture', 'sentences', 'passage'];
   const SPEAKER_RE = /^([AB])\s*[:：]\s*(.*)$/;
   // A second "A:" / "B:" on the same line, as printed on paper: "A：…  B：…".
   const INLINE_SPEAKER_RE = /[\s　]+(?=[AB]\s*[:：])/;
@@ -129,7 +129,7 @@
   function parseSection(type, text) {
     checkType(type);
     const lines = splitLines(text);
-    if (type === 'dialogue') return finish(parseDialogue(lines));
+    if (type === 'dialogue' || type === 'picture') return finish(parseDialogue(lines));
     if (type === 'passage') return finish(parsePassage(lines));
     return finish(parseLines(type, lines));
   }
@@ -137,7 +137,7 @@
   function serializeSection(type, items) {
     checkType(type);
     const list = items || [];
-    if (type === 'dialogue') {
+    if (type === 'dialogue' || type === 'picture') {
       return list.map((it) => it.lines.map((l) => `${l.speaker}: ${l.text}`).join('\n')).join('\n\n');
     }
     if (type === 'passage') return list.length ? list[0].text : '';

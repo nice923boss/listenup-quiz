@@ -21,6 +21,7 @@
       case 'item-gap': return '秒後下一題';
       case 'section-gap': return '秒後下一大題';
       case 'number-gap': return '秒後念題目';
+      case 'look-gap': return '秒後念題目，請先看圖';
       case 'section-title-gap': return '秒後開始第 1 題';
       default: return '秒後念下一句';
     }
@@ -33,7 +34,7 @@
       part: q('.pl-part'), titleEn: q('.pl-title-en'), titleZh: q('.pl-title-zh'),
       number: q('#big-number'), pass: q('.pl-pass'), speaking: q('#state-speaking'),
       countdown: q('#state-countdown'), ring: q('#ring-prog'), ringNum: q('#ring-num'), ringLabel: q('.pl-countdown-label'),
-      text: q('#pl-text'), count: q('#pl-count'), bar: q('#pl-bar'), sec: q('#pl-sec'),
+      stage: q('.pl-stage'), image: q('#pl-image'), text: q('#pl-text'), count: q('#pl-count'), bar: q('#pl-bar'), sec: q('#pl-sec'),
       main: q('#pl-main'), list: q('#pl-list'), groups: q('#pl-list-groups'), canvas: q('#player-bg'),
     };
     const wakeLock = engine.createWakeLock();
@@ -91,6 +92,14 @@
       renderText(s.display, 0, 0);
     }
 
+    // Only picture items carry an image; everything else keeps the big number layout.
+    function showImage(section, itemIndex) {
+      const src = itemIndex === null ? '' : section.items[itemIndex].image || '';
+      el.stage.classList.toggle('has-image', Boolean(src));
+      el.image.hidden = !src;
+      if (src) el.image.src = src; else el.image.removeAttribute('src');
+    }
+
     function showStep(step) {
       const s = session;
       const { section: si, item, pass } = step.ref;
@@ -105,6 +114,7 @@
         s.itemKey = `${si}:${item}`;
         setNumber(item === null ? `Part ${section.id}` : `${section.id}-${item + 1}`);
         showItemText(section, item);
+        showImage(section, item);
       }
       el.pass.hidden = item === null;
       if (item !== null) el.pass.replaceChildren('第 ', h('b', { text: String(Math.max(pass, 0) + 1) }), ` / ${cfg.repeat} 遍`);
@@ -156,6 +166,7 @@
       el.pass.hidden = true;
       setProgress(session.starts.length, session.starts.length);
       session.itemKey = null;
+      showImage(null, null);
       if (session.settings.showTextWhilePlaying) el.text.replaceChildren();
     }
 

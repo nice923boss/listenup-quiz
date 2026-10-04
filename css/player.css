@@ -36,6 +36,21 @@
 .pl-number-wrap { width: min(86vw, 1400px); display: grid; align-items: center; min-height: 0; }
 .pl-number { font: 700 120px/1 var(--font-en); text-align: center; letter-spacing: 0.02em; white-space: nowrap; }
 
+/* Picture items: the picture fills the left column, number and countdown sit on the right.
+   The number shrinks (overrides fitty's inline size). Narrow screens stack them (see media query). */
+.pl-stage.has-image {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-rows: 1fr auto auto auto 1fr;
+  grid-template-areas: "image ." "image section" "image number" "image status" "image text";
+  column-gap: 40px; padding-bottom: 8px;
+}
+.pl-stage.has-image .pl-section { grid-area: section; }
+.pl-stage.has-image .pl-number-wrap { grid-area: number; width: 100%; }
+.pl-stage.has-image .pl-number { font-size: clamp(48px, 12vh, 120px) !important; }
+.pl-stage.has-image .pl-status { grid-area: status; flex-direction: column; gap: 12px; }
+.pl-stage.has-image .pl-text { grid-area: text; align-self: start; }
+.pl-image { grid-area: image; width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+
 .pl-status { display: flex; align-items: center; justify-content: center; gap: 28px; min-height: 92px; }
 .pl-pass { font-size: clamp(18px, 2.2vw, 28px); color: var(--pl-muted); }
 .pl-pass b { font: 700 1.3em var(--font-en); color: var(--pl-fg); }
@@ -111,6 +126,11 @@
 @media (max-width: 860px) {
   .pl-list { width: 100%; }
   .pl-status { flex-direction: column; gap: 10px; }
+  .pl-stage.has-image {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr auto auto;
+    grid-template-areas: "section" "number" "image" "status" "text";
+  }
+  .pl-stage.has-image .pl-number { font-size: clamp(40px, 9vh, 96px) !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pl-speaking span { animation: none; transform: scaleY(0.6); }

@@ -3,13 +3,15 @@
   'use strict';
 
   const SCHEMA_VERSION = 1;
-  const SECTION_TYPES = ['words', 'phonics', 'dialogue', 'sentences', 'passage'];
+  const SECTION_TYPES = ['words', 'phonics', 'dialogue', 'picture', 'sentences', 'passage'];
   const ANNOUNCE_SECTION = ['none', 'en', 'en+zh'];
   const GAP_KEYS = ['repeatGapSec', 'itemGapSec', 'sectionGapSec', 'numberGapSec',
-    'sectionTitleGapSec', 'dialogueLineGapSec', 'passageSentenceGapSec'];
+    'sectionTitleGapSec', 'dialogueLineGapSec', 'passageSentenceGapSec', 'pictureLookSec', 'pictureItemGapSec'];
   const OVERRIDE_KEYS = ['repeat', 'repeatGapSec', 'itemGapSec'];
   const BOOLEAN_KEYS = ['announceNumber', 'showTextWhilePlaying', 'animatedBackground'];
   const VOICE_KEYS = ['en', 'enB', 'zh'];
+  // Picture items keep an uploaded image as a data URL (compressed in the editor).
+  const IMAGE_RE = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+=*$/;
 
   const DEFAULT_SETTINGS = {
     schemaVersion: SCHEMA_VERSION,
@@ -26,6 +28,8 @@
     sectionTitleGapSec: 1.5,
     dialogueLineGapSec: 0.8,
     passageSentenceGapSec: 0.4,
+    pictureLookSec: 5,
+    pictureItemGapSec: 10,
     showTextWhilePlaying: false,
     animatedBackground: true,
   };
@@ -124,7 +128,7 @@
 
   function checkItem(type, item, path, err) {
     if (!isObj(item)) { err(path, '每一題必須是物件'); return null; }
-    if (type === 'dialogue') {
+    if (type === 'dialogue' || type === 'picture') {
       if (!Array.isArray(item.lines) || item.lines.length === 0) { err(`${path}.lines`, '對話至少要有 1 句'); return null; }
       const lines = item.lines.map((line, j) => {
         const p = `${path}.lines[${j}]`;
@@ -134,7 +138,10 @@
         if (!isText(line.text) || /[\r\n]/.test(line.text)) { err(`${p}.text`, '台詞不能空白，也不能換行'); ok = false; }
         return ok ? { speaker: line.speaker, text: line.text } : null;
       });
-      return lines.every(Boolean) ? { lines } : null;
+      if (!lines.every(Boolean)) return null;
+      if (type !== 'picture' || item.image === undefined) return { lines };
+      if (typeof item.image !== 'string' || !IMAGE_RE.test(item.image)) { err(`${path}.image`, '圖片格式不對，必須是 PNG、JPEG、GIF 或 WebP 圖片資料'); return null; }
+      return { lines, image: item.image };
     }
     if (!isText(item.text)) { err(`${path}.text`, '題目內容不能空白'); return null; }
     if (type !== 'passage' && /[\r\n]/.test(item.text)) { err(`${path}.text`, '這個題型一題只能有一行'); return null; }
@@ -192,11 +199,13 @@
   }
 
   // Section override wins over global settings; only OVERRIDE_KEYS are applied.
+  // Picture sections wait pictureItemGapSec between items (answer time) instead of itemGapSec.
   function sectionSettings(settings, section) {
     const override = (section && section.override) || {};
     const picked = {};
     for (const key of OVERRIDE_KEYS) if (override[key] !== undefined) picked[key] = override[key];
-    return { ...settings, ...picked };
+    const base = section && section.type === 'picture' ? { ...settings, itemGapSec: settings.pictureItemGapSec } : settings;
+    return { ...base, ...picked };
   }
 
   function formatError(e) {

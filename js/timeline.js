@@ -97,13 +97,13 @@
 
   function displayText(section, item) {
     if (section.type === 'phonics') return parser.stripPhonics(item.text);
-    if (section.type === 'dialogue') return item.lines.map((l) => `${l.speaker}: ${l.text}`).join('\n');
+    if (section.type === 'dialogue' || section.type === 'picture') return item.lines.map((l) => `${l.speaker}: ${l.text}`).join('\n');
     return item.text;
   }
 
   // Spoken chunks of one item: { text, offset, enRole } with a gap kind between chunks.
   function itemChunks(section, item) {
-    if (section.type === 'dialogue') {
+    if (section.type === 'dialogue' || section.type === 'picture') {
       let offset = 0;
       const chunks = item.lines.map((line) => {
         const chunk = { text: line.text, offset: offset + line.speaker.length + 2, enRole: line.speaker === 'B' ? 'enB' : 'en' };
@@ -145,11 +145,13 @@
       }
       section.items.forEach((item, ii) => {
         const { chunks, gapKind, gapKey } = itemChunks(section, item);
+        const first = { section: si, item: ii, pass: 0 };
         if (cfg.announceNumber) {
-          const ref = { section: si, item: ii, pass: 0 };
-          say('number', cfg.numberTemplate.replace(/\{n\}/g, String(ii + 1)), ref, { defaultLang: 'en', enRole: 'en' });
-          wait('number-gap', cfg.numberGapSec, ref);
+          say('number', cfg.numberTemplate.replace(/\{n\}/g, String(ii + 1)), first, { defaultLang: 'en', enRole: 'en' });
+          if (section.type !== 'picture') wait('number-gap', cfg.numberGapSec, first);
         }
+        // Students look at the picture before the dialogue starts, with or without a spoken number.
+        if (section.type === 'picture') wait('look-gap', cfg.pictureLookSec, first);
         for (let pass = 0; pass < cfg.repeat; pass += 1) {
           const ref = { section: si, item: ii, pass };
           if (pass > 0) wait('repeat-gap', cfg.repeatGapSec, { ...ref, pass: pass - 1 });

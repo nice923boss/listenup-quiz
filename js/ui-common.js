@@ -114,9 +114,35 @@
     });
   }
 
+  // Image file -> JPEG data URL with the longest side at most maxSide px, so a few pictures fit in localStorage.
+  // Drawn on white so transparent PNGs do not turn black.
+  function readImage(file, maxSide = 1024) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = doc.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error(`「${file.name}」不是瀏覽器能讀取的圖片`));
+      };
+      img.src = url;
+    });
+  }
+
   const api = {
     reduceMotion, h, icon, icons, animate, fadeIn, fadeOut, readNumber, setFieldError,
-    confirmDialog, listDialog, toast,
+    confirmDialog, listDialog, toast, readImage,
   };
   root.ListenUpQuiz = root.ListenUpQuiz || {};
   root.ListenUpQuiz.ui = api;

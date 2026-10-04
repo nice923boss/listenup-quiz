@@ -16,6 +16,8 @@
     { key: 'sectionTitleGapSec', label: '大題標題後停頓', unit: '秒' },
     { key: 'dialogueLineGapSec', label: '對話句間停頓', unit: '秒' },
     { key: 'passageSentenceGapSec', label: '短文句間停頓', unit: '秒' },
+    { key: 'pictureLookSec', label: '看圖時間（看圖對話）', unit: '秒' },
+    { key: 'pictureItemGapSec', label: '作答時間（看圖對話）', unit: '秒' },
   ];
   const SWITCHES = { announceNumber: '#set-announce-number', showTextWhilePlaying: '#set-show-text', animatedBackground: '#set-animated-bg' };
   const PREVIEW_TEXT = {

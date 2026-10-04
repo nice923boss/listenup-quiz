@@ -121,6 +121,10 @@ textarea.input { resize: vertical; line-height: 1.7; }
 .speaker.b { background: var(--accent-soft); color: var(--accent); }
 .preview-list li.is-error .txt { color: var(--danger); }
 .err-reason { display: block; font: 12px/1.5 var(--font-zh); color: var(--danger); }
+/* Picture items: thumbnail and image buttons beside each parsed item */
+.preview-list > li.has-pic { grid-template-columns: 30px 1fr auto; }
+.pic { display: flex; align-items: center; gap: 6px; }
+.pic-thumb { width: 72px; height: 54px; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
 
 /* Language segments (mixed Chinese / English) */
 .segs { display: inline-flex; flex-wrap: wrap; gap: 4px; }
@@ -193,6 +197,8 @@ textarea.input { resize: vertical; line-height: 1.7; }
   .voice-row, .mixed-test { grid-template-columns: 1fr auto; }
   .voice-row .label, .mixed-test .label { grid-column: 1 / -1; }
   .voice-row .hint, .mixed-test .segs { grid-column: 1 / -1; }
+  .preview-list > li.has-pic { grid-template-columns: 30px 1fr; }
+  .preview-list > li.has-pic .pic { grid-column: 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -11,6 +11,7 @@
     words: { label: '單字', hint: '一行一題', placeholder: 'that\nphoto\npink', rows: 7 },
     phonics: { label: '發音字母', hint: '一行一題，用 [ ] 標出底線字母', placeholder: '[d]og\n[g]irl', rows: 7 },
     dialogue: { label: '對話', hint: '每行 A: 或 B: 開頭，空行分隔不同題', placeholder: "A: What's wrong?\nB: Ouch! My foot hurts.", rows: 11 },
+    picture: { label: '看圖對話', hint: '輸入方式同對話；再按右邊每題的「加圖片」', placeholder: "A: What's wrong?\nB: Ouch! My foot hurts.", rows: 11 },
     sentences: { label: '句子', hint: '一行一題', placeholder: 'Can you give me a hand?\nWhat\'s wrong?', rows: 7 },
     passage: { label: '短文', hint: '整篇貼上即可，播放時會自動切成句子', placeholder: 'Today is Saturday. It\'s sunny and hot. ...', rows: 11 },
   };
@@ -75,7 +76,7 @@
     if (type === 'phonics') {
       return parser.phonicsParts(item.text).map((p) => (p.underline ? h('u', { text: p.text }) : document.createTextNode(p.text)));
     }
-    if (type === 'dialogue') return item.lines.map((l) => speakerLine(l.speaker, l.text, l.speaker === 'B'));
+    if (type === 'dialogue' || type === 'picture') return item.lines.map((l) => speakerLine(l.speaker, l.text, l.speaker === 'B'));
     if (type === 'passage') return timeline.splitSentences(item.text).map((s, i) => speakerLine(String(i + 1), s.text, false));
     return [langText(item.text)];
   }
@@ -93,6 +94,7 @@
   function countText(type, items) {
     if (type === 'passage' && items.length) return `1 題，切成 ${timeline.splitSentences(items[0].text).length} 句`;
     if (type === 'dialogue' && items.length) return `${items.length} 題，${items.reduce((n, it) => n + it.lines.length, 0)} 句`;
+    if (type === 'picture' && items.length) return `${items.length} 題，圖片 ${items.filter((it) => it.image).length} / ${items.length}`;
     return `${items.length} 題`;
   }
 
@@ -107,6 +109,13 @@
     const cards = () => [...sectionsEl.querySelectorAll('.section-card')];
     const stateOf = (card) => cardState.get(card);
     const changed = () => { updateStats(); onChange(); };
+    // Images follow the item index of a picture section (inserting an item in the middle shifts them).
+    const withImages = (card, items) => items.map((item, i) => {
+      const image = stateOf(card).images[i];
+      return image ? { ...item, image } : item;
+    });
+    const imagePicker = h('input', { type: 'file', accept: 'image/*', hidden: true });
+    let imageTarget = null;
 
     function updateStats() {
       const all = cards();
@@ -140,7 +149,7 @@
     function updateSummary(card) {
       const f = fields(card);
       const { parsed } = stateOf(card);
-      const badges = [h('span', { class: 'badge note', text: countText(f.type.value, parsed.items) })];
+      const badges = [h('span', { class: 'badge note', text: countText(f.type.value, withImages(card, parsed.items)) })];
       if (parsed.errors.length) badges.push(h('span', { class: 'badge err', text: `${parsed.errors.length} 行有問題` }));
       const over = OVERRIDES.map((o) => {
         const v = ui.readNumber(f.overrides.find((i) => i.dataset.key === o.key).value);
@@ -159,10 +168,15 @@
       f.title.textContent = type === 'phonics' ? '解析結果（念的時候去掉括號）' : '解析結果';
       const badge = parsed.errors.length
         ? h('span', { class: 'badge err' }, [ui.icon('circle-alert'), `${parsed.errors.length} 行有問題`])
-        : h('span', { class: parsed.items.length ? 'badge ok' : 'badge note' }, [parsed.items.length ? ui.icon('check') : null, countText(type, parsed.items)]);
+        : h('span', { class: parsed.items.length ? 'badge ok' : 'badge note' }, [parsed.items.length ? ui.icon('check') : null, countText(type, withImages(card, parsed.items))]);
       f.badge.replaceChildren(badge);
       ui.icons(f.badge);
-      f.list.replaceChildren(...parsed.entries.map((e) => entryRow(type, e)));
+      f.list.replaceChildren(...parsed.entries.map((e) => {
+        const row = entryRow(type, e);
+        if (type === 'picture' && e.kind !== 'error') { row.classList.add('has-pic'); row.append(imageControl(card, e.index)); }
+        return row;
+      }));
+      ui.icons(f.list);
       annotate(card);
       updateSummary(card);
     }
@@ -176,8 +190,42 @@
     }
 
     function applyDefaults(card) {
-      fields(card).overrides.forEach((input) => { input.placeholder = `沿用 ${defaults[input.dataset.key]}`; });
+      const base = schema.sectionSettings(defaults, { type: fields(card).type.value });
+      fields(card).overrides.forEach((input) => { input.placeholder = `沿用 ${base[input.dataset.key]}`; });
     }
+
+    // ---- picture images ----
+
+    function imageControl(card, index) {
+      const src = stateOf(card).images[index];
+      const pick = h('button', { type: 'button', class: 'btn btn-sm' }, [ui.icon('image-plus'), src ? '換圖片' : '加圖片']);
+      pick.addEventListener('click', () => { imageTarget = { card, index }; imagePicker.value = ''; imagePicker.click(); });
+      if (!src) return h('span', { class: 'pic' }, [pick]);
+      const remove = h('button', { type: 'button', class: 'icon-btn danger', 'aria-label': `移除第 ${index + 1} 題的圖片`, title: '移除圖片' }, [ui.icon('x')]);
+      remove.addEventListener('click', () => setImage(card, index, undefined));
+      return h('span', { class: 'pic' }, [h('img', { class: 'pic-thumb', src, alt: `第 ${index + 1} 題的圖片` }), pick, remove]);
+    }
+
+    function setImage(card, index, image) {
+      const images = [...stateOf(card).images];
+      images[index] = image;
+      stateOf(card).images = images;
+      renderPreview(card);
+      changed();
+    }
+
+    imagePicker.addEventListener('change', async () => {
+      const file = imagePicker.files[0];
+      const target = imageTarget;
+      imageTarget = null;
+      if (!file || !target) return;
+      try {
+        setImage(target.card, target.index, await ui.readImage(file));
+      } catch (err) {
+        console.warn('[ListenUp Quiz] image read failed:', err);
+        ui.toast(`無法加入圖片：${err.message}`, 'error');
+      }
+    });
 
     function validateOverride(input) {
       const v = ui.readNumber(input.value);
@@ -215,7 +263,7 @@
         clearTimeout(timer);
         timer = setTimeout(() => { renderPreview(card); changed(); }, PARSE_DELAY_MS);
       });
-      f.type.addEventListener('change', () => { applyType(card); renderPreview(card); changed(); });
+      f.type.addEventListener('change', () => { applyType(card); applyDefaults(card); renderPreview(card); changed(); });
       [f.id, f.en, f.zh].forEach((input) => input.addEventListener('input', () => { updateSummary(card); onChange(); }));
       f.overrides.forEach((input) => input.addEventListener('input', () => { validateOverride(input); updateSummary(card); onChange(); }));
       f.toggle.addEventListener('click', () => setCollapsed(card, !card.classList.contains('is-collapsed')));
@@ -225,7 +273,8 @@
     function createCard(section) {
       const card = h('article', { class: 'card section-card' });
       card.innerHTML = CARD_HTML;
-      cardState.set(card, { parsed: { items: [], errors: [], entries: [] }, annotations: [], errorKeys: new Set() });
+      const images = section.type === 'picture' ? section.items.map((item) => item.image) : [];
+      cardState.set(card, { parsed: { items: [], errors: [], entries: [] }, annotations: [], errorKeys: new Set(), images });
       const f = fields(card);
       f.id.value = section.id;
       f.type.value = section.type;
@@ -292,7 +341,8 @@
           else override[o.key] = v;
         });
         const base = { id, type, titleEn: f.en.value.trim(), titleZh: f.zh.value.trim() };
-        return Object.keys(override).length ? { ...base, override, items: parsed.items } : { ...base, items: parsed.items };
+        const items = type === 'picture' ? withImages(card, parsed.items) : parsed.items;
+        return Object.keys(override).length ? { ...base, override, items } : { ...base, items };
       });
       return { exam: { schemaVersion: schema.SCHEMA_VERSION, title: titleInput.value.trim(), sections }, errors };
     }
@@ -324,6 +374,7 @@
 
     titleInput.addEventListener('input', onChange);
     addBtn.addEventListener('click', addSection);
+    page.append(imagePicker);
     root.Sortable.create(sectionsEl, {
       handle: '.drag-handle',
       animation: ui.reduceMotion() ? 0 : 150,
