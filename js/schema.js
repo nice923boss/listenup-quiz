@@ -23,7 +23,7 @@
     sectionGapSec: 10,
     announceNumber: true,
     numberTemplate: 'Number {n}.',
-    announceSection: 'en',
+    announceSection: 'en+zh',
     numberGapSec: 0.8,
     sectionTitleGapSec: 1.5,
     dialogueLineGapSec: 0.8,
