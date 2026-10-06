@@ -84,6 +84,8 @@ textarea.input { resize: vertical; line-height: 1.7; }
 .input-title { font-size: 20px; font-weight: 700; border-color: transparent; background: transparent; padding-left: 0; }
 .input-title:hover, .input-title:focus { border-color: var(--line); background: var(--surface); padding-left: 10px; }
 .exam-stats { font-size: 13px; color: var(--muted); }
+.exam-desc-label { margin-top: 8px; }
+.input-description { min-height: 64px; }
 
 /* ---------- Section cards ---------- */
 .sections { display: grid; gap: 16px; }

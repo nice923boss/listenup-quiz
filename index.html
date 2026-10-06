@@ -37,9 +37,11 @@
   <!-- ===== Editor tab ===== -->
   <main class="page" id="tab-editor">
     <section class="card exam-head">
-      <label class="field-label" for="exam-title">考卷標題（只顯示，不念出）</label>
+      <label class="field-label" for="exam-title">考卷標題<small>播放時要不要念，在「設定」調整</small></label>
       <input class="input input-title" id="exam-title" placeholder="例如：五年級英語 第一次定期評量 聽力測驗">
       <span class="exam-stats"></span>
+      <label class="field-label exam-desc-label" for="exam-description">考卷說明<small>選填；念完標題接著念，在「設定」調整</small></label>
+      <textarea class="input input-description" id="exam-description" rows="2" placeholder="例如：本測驗共有五大題，每題念兩遍，請仔細聽。"></textarea>
     </section>
     <div class="sections" id="sections"></div>
     <button class="btn btn-ghost add-section"><i data-lucide="plus"></i>新增大題</button>
@@ -91,6 +93,8 @@
 
       <section class="card settings-card">
         <h2><i data-lucide="list-ordered"></i>念題方式與畫面</h2>
+        <div class="switch-row"><div><div>念考卷標題</div><div class="desc">播放一開始先念題目頁的考卷標題</div></div><label class="switch"><input type="checkbox" id="set-announce-exam-title" aria-label="念考卷標題"><span></span></label></div>
+        <div class="switch-row"><div><div>念考卷說明</div><div class="desc">接著念題目頁的考卷說明；留空就不念</div></div><label class="switch"><input type="checkbox" id="set-announce-exam-description" aria-label="念考卷說明"><span></span></label></div>
         <div class="switch-row"><div><div>念題號</div><div class="desc">格式 <span class="en">Number {n}.</span>，每個大題從 1 起算</div></div><label class="switch"><input type="checkbox" id="set-announce-number" aria-label="念題號"><span></span></label></div>
         <div class="switch-row"><div><div>念大題標題</div><div class="desc">英文格式 <span class="en">Part {id}. {titleEn}</span>；「英文＋中文」會接著念中文說明</div></div>
           <div class="segmented" id="seg-announce" role="group" aria-label="念大題標題"><button data-value="none" aria-pressed="false">不念</button><button data-value="en" aria-pressed="false">只念英文</button><button data-value="en+zh" aria-pressed="false">英文＋中文</button></div></div>

@@ -100,6 +100,7 @@
 
   function createEditor({ page, onChange }) {
     const titleInput = page.querySelector('.input-title');
+    const descInput = page.querySelector('.input-description');
     const statsEl = page.querySelector('.exam-stats');
     const sectionsEl = page.querySelector('#sections');
     const addBtn = page.querySelector('.add-section');
@@ -296,6 +297,7 @@
     function render(exam) {
       cards().forEach(clearAnnotations);
       titleInput.value = exam.title;
+      descInput.value = exam.description || '';
       const list = exam.sections.map(createCard);
       sectionsEl.replaceChildren(...list);
       ui.icons(sectionsEl);
@@ -344,7 +346,9 @@
         const items = type === 'picture' ? withImages(card, parsed.items) : parsed.items;
         return Object.keys(override).length ? { ...base, override, items } : { ...base, items };
       });
-      return { exam: { schemaVersion: schema.SCHEMA_VERSION, title: titleInput.value.trim(), sections }, errors };
+      const head = { schemaVersion: schema.SCHEMA_VERSION, title: titleInput.value.trim() };
+      const description = descInput.value.trim();
+      return { exam: description ? { ...head, description, sections } : { ...head, sections }, errors };
     }
 
     // Expand, scroll to and focus the field of one collect() error; parse errors select the bad line.
@@ -372,7 +376,7 @@
     // Circles need a visible layout; call after the editor tab becomes visible again.
     const refreshAnnotations = () => cards().forEach(annotate);
 
-    titleInput.addEventListener('input', onChange);
+    [titleInput, descInput].forEach((input) => input.addEventListener('input', onChange));
     addBtn.addEventListener('click', addSection);
     page.append(imagePicker);
     root.Sortable.create(sectionsEl, {

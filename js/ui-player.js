@@ -23,6 +23,7 @@
       case 'number-gap': return '秒後念題目';
       case 'look-gap': return '秒後念題目，請先看圖';
       case 'section-title-gap': return '秒後開始第 1 題';
+      case 'exam-intro-gap': return '秒後繼續';
       default: return '秒後念下一句';
     }
   }
@@ -100,9 +101,21 @@
       if (src) el.image.src = src; else el.image.removeAttribute('src');
     }
 
-    function showStep(step) {
+    // Exam title / description before the first section (ref.section is null).
+    function showIntro() {
       const s = session;
-      const { section: si, item, pass } = step.ref;
+      [el.part, el.titleEn, el.titleZh, el.sec].forEach((node) => { node.textContent = ''; });
+      setProgress(1, s.starts.length);
+      el.pass.hidden = true;
+      if (s.itemKey === 'intro') return;
+      s.itemKey = 'intro';
+      setNumber('考卷說明');
+      if (s.settings.showTextWhilePlaying) { s.display = ''; el.text.replaceChildren(); }
+      showImage(null, null);
+    }
+
+    function showSectionStep(si, item, pass) {
+      const s = session;
       const section = s.exam.sections[si];
       const cfg = schema.sectionSettings(s.settings, section);
       el.part.textContent = `Part ${section.id}`;
@@ -118,6 +131,12 @@
       }
       el.pass.hidden = item === null;
       if (item !== null) el.pass.replaceChildren('第 ', h('b', { text: String(Math.max(pass, 0) + 1) }), ` / ${cfg.repeat} 遍`);
+    }
+
+    function showStep(step) {
+      const s = session;
+      const { section: si, item, pass } = step.ref;
+      if (si === null) showIntro(); else showSectionStep(si, item, pass);
       if (step.type === 'wait') {
         el.ringLabel.textContent = countdownLabel(step);
         showStatus(s.state === 'playing' ? 'countdown' : 'none');

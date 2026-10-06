@@ -8,7 +8,7 @@
   const GAP_KEYS = ['repeatGapSec', 'itemGapSec', 'sectionGapSec', 'numberGapSec',
     'sectionTitleGapSec', 'dialogueLineGapSec', 'passageSentenceGapSec', 'pictureLookSec', 'pictureItemGapSec'];
   const OVERRIDE_KEYS = ['repeat', 'repeatGapSec', 'itemGapSec'];
-  const BOOLEAN_KEYS = ['announceNumber', 'showTextWhilePlaying', 'animatedBackground'];
+  const BOOLEAN_KEYS = ['announceExamTitle', 'announceExamDescription', 'announceNumber', 'showTextWhilePlaying', 'animatedBackground'];
   const VOICE_KEYS = ['en', 'enB', 'zh'];
   // Picture items keep an uploaded image as a data URL (compressed in the editor).
   const IMAGE_RE = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+=*$/;
@@ -21,6 +21,8 @@
     repeatGapSec: 3,
     itemGapSec: 6,
     sectionGapSec: 10,
+    announceExamTitle: true,
+    announceExamDescription: true,
     announceNumber: true,
     numberTemplate: 'Number {n}.',
     announceSection: 'en+zh',
@@ -191,11 +193,15 @@
     const vErr = versionError(file, input.schemaVersion);
     if (vErr) errors.push(vErr);
     if (typeof input.title !== 'string') err('title', '考卷標題必須是文字');
+    // Optional; kept only when it has text, like override and image.
+    if (input.description !== undefined && typeof input.description !== 'string') err('description', '考卷說明必須是文字');
     let sections = [];
     if (!Array.isArray(input.sections)) err('sections', '必須是陣列');
     else sections = input.sections.map((s, i) => checkSection(s, i, err));
     if (errors.length) return { ok: false, value: null, errors };
-    return { ok: true, value: { schemaVersion: SCHEMA_VERSION, title: input.title, sections }, errors: [] };
+    const head = { schemaVersion: SCHEMA_VERSION, title: input.title };
+    const value = isText(input.description) ? { ...head, description: input.description, sections } : { ...head, sections };
+    return { ok: true, value, errors: [] };
   }
 
   // Section override wins over global settings; only OVERRIDE_KEYS are applied.

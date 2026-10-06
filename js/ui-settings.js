@@ -13,13 +13,16 @@
     { key: 'itemGapSec', label: '下一題間隔', unit: '秒' },
     { key: 'sectionGapSec', label: '大題間隔', unit: '秒' },
     { key: 'numberGapSec', label: '題號後停頓', unit: '秒' },
-    { key: 'sectionTitleGapSec', label: '大題標題後停頓', unit: '秒' },
+    { key: 'sectionTitleGapSec', label: '標題後停頓（考卷與大題）', unit: '秒' },
     { key: 'dialogueLineGapSec', label: '對話句間停頓', unit: '秒' },
     { key: 'passageSentenceGapSec', label: '短文句間停頓', unit: '秒' },
     { key: 'pictureLookSec', label: '看圖時間（看圖對話）', unit: '秒' },
     { key: 'pictureItemGapSec', label: '作答時間（看圖對話）', unit: '秒' },
   ];
-  const SWITCHES = { announceNumber: '#set-announce-number', showTextWhilePlaying: '#set-show-text', animatedBackground: '#set-animated-bg' };
+  const SWITCHES = {
+    announceExamTitle: '#set-announce-exam-title', announceExamDescription: '#set-announce-exam-description',
+    announceNumber: '#set-announce-number', showTextWhilePlaying: '#set-show-text', animatedBackground: '#set-animated-bg',
+  };
   const PREVIEW_TEXT = {
     en: 'Number 1. Can you give me a hand?',
     enB: 'Ouch! My foot hurts.',

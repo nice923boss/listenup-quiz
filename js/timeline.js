@@ -14,6 +14,7 @@
   const TERMINATOR_RE = /[.!?。！？]+["'”’)\]）」』]*/g;
   const HALF_TERMINATOR_RE = /[.!?]/;
   const ABBREVIATION_RE = /(?:^|[^A-Za-z])(?:Mr|Mrs|Ms|Dr|St|Mt|Jr|Sr|Prof)$/;
+  const isText = (v) => typeof v === 'string' && v.trim() !== '';
 
   // 'zh' / 'en' for script letters and CJK punctuation, null for neutral characters.
   function classify(ch) {
@@ -134,6 +135,18 @@
       .map((section, index) => ({ section, index }))
       .filter(({ section }) => section.items.length > 0);
 
+    // Exam title and description come first, each followed by the title gap; section null marks them.
+    if (sections.length) {
+      const ref = { section: null, item: null, pass: null };
+      const intro = [];
+      if (settings.announceExamTitle && isText(exam.title)) intro.push(['exam-title', exam.title]);
+      if (settings.announceExamDescription && isText(exam.description)) intro.push(['exam-description', exam.description]);
+      intro.forEach(([kind, text]) => {
+        say(kind, text, ref, { defaultLang: 'zh', enRole: 'en' });
+        wait('exam-intro-gap', settings.sectionTitleGapSec, ref);
+      });
+    }
+
     sections.forEach(({ section, index: si }, k) => {
       const cfg = schema.sectionSettings(settings, section);
       if (cfg.announceSection !== 'none') {
@@ -168,7 +181,8 @@
     return steps;
   }
 
-  // First step index of every item; the first item of a section starts at its title.
+  // First step index of every item; the first item of a section starts at its title,
+  // and the first item of the exam also takes the exam title / description before it.
   function itemStarts(steps) {
     const starts = [];
     const seen = new Set();
@@ -181,6 +195,7 @@
       const start = item === 0 && titleAt.has(section) ? titleAt.get(section) : index;
       starts.push({ section, item, index: start });
     });
+    if (starts.length && steps[0].ref.section === null) starts[0] = { ...starts[0], index: 0 };
     return starts;
   }
 
