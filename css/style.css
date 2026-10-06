@@ -206,3 +206,12 @@ textarea.input { resize: vertical; line-height: 1.7; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Windows contrast themes / browser page colors drop backgrounds, which hid switch and selection states. */
+@media (forced-colors: active) {
+  .switch span { forced-color-adjust: none; background: Canvas; border: 1px solid CanvasText; }
+  .switch span::after { top: 2px; left: 2px; background: CanvasText; }
+  .switch input:checked + span { background: Highlight; border-color: Highlight; }
+  .switch input:checked + span::after { background: HighlightText; }
+  .segmented button[aria-pressed="true"], .tab.is-active { outline: 2px solid Highlight; outline-offset: -2px; }
+}
