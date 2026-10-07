@@ -91,7 +91,7 @@
   async function clearExam() {
     if (!(await ui.confirmDialog({
       title: '清空目前的題目？',
-      text: '考卷標題、考卷說明與所有大題都會清除，設定不受影響。按「儲存」後才會覆蓋這個瀏覽器裡存的題目。',
+      text: '考卷標題、考卷說明、考卷結尾與所有大題都會清除，設定不受影響。按「儲存」後才會覆蓋這個瀏覽器裡存的題目。',
       confirmText: '清空',
       danger: true,
     }))) return;

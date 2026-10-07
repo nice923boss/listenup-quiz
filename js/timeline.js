@@ -176,8 +176,15 @@
         const last = { section: si, item: ii, pass: cfg.repeat - 1 };
         if (ii < section.items.length - 1) wait('item-gap', cfg.itemGapSec, last);
         else if (k < sections.length - 1) wait('section-gap', cfg.sectionGapSec, last);
+        // The last item still gets its answer time before the closing.
+        else if (isText(exam.closing)) wait('closing-gap', cfg.itemGapSec, last);
       });
     });
+
+    // Exam closing comes last; section null marks it like the intro.
+    if (sections.length && isText(exam.closing)) {
+      say('exam-closing', exam.closing, { section: null, item: null, pass: null }, { defaultLang: 'zh', enRole: 'en' });
+    }
     return steps;
   }
 

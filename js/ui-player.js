@@ -24,6 +24,7 @@
       case 'look-gap': return '秒後念題目，請先看圖';
       case 'section-title-gap': return '秒後開始第 1 題';
       case 'exam-intro-gap': return '秒後繼續';
+      case 'closing-gap': return '秒後念結尾';
       default: return '秒後念下一句';
     }
   }
@@ -101,15 +102,16 @@
       if (src) el.image.src = src; else el.image.removeAttribute('src');
     }
 
-    // Exam title / description before the first section (ref.section is null).
-    function showIntro() {
+    // Exam title / description before the first section, closing after the last item (ref.section is null).
+    function showExamText(closing) {
       const s = session;
+      const key = closing ? 'closing' : 'intro';
       [el.part, el.titleEn, el.titleZh, el.sec].forEach((node) => { node.textContent = ''; });
-      setProgress(1, s.starts.length);
+      setProgress(closing ? s.starts.length : 1, s.starts.length);
       el.pass.hidden = true;
-      if (s.itemKey === 'intro') return;
-      s.itemKey = 'intro';
-      setNumber('考卷說明');
+      if (s.itemKey === key) return;
+      s.itemKey = key;
+      setNumber(closing ? '考卷結尾' : '考卷說明');
       if (s.settings.showTextWhilePlaying) { s.display = ''; el.text.replaceChildren(); }
       showImage(null, null);
     }
@@ -136,7 +138,7 @@
     function showStep(step) {
       const s = session;
       const { section: si, item, pass } = step.ref;
-      if (si === null) showIntro(); else showSectionStep(si, item, pass);
+      if (si === null) showExamText(step.kind === 'exam-closing'); else showSectionStep(si, item, pass);
       if (step.type === 'wait') {
         el.ringLabel.textContent = countdownLabel(step);
         showStatus(s.state === 'playing' ? 'countdown' : 'none');

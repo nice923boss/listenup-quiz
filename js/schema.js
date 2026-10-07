@@ -195,13 +195,14 @@
     if (typeof input.title !== 'string') err('title', '考卷標題必須是文字');
     // Optional; kept only when it has text, like override and image.
     if (input.description !== undefined && typeof input.description !== 'string') err('description', '考卷說明必須是文字');
+    if (input.closing !== undefined && typeof input.closing !== 'string') err('closing', '考卷結尾必須是文字');
     let sections = [];
     if (!Array.isArray(input.sections)) err('sections', '必須是陣列');
     else sections = input.sections.map((s, i) => checkSection(s, i, err));
     if (errors.length) return { ok: false, value: null, errors };
     const head = { schemaVersion: SCHEMA_VERSION, title: input.title };
     const value = isText(input.description) ? { ...head, description: input.description, sections } : { ...head, sections };
-    return { ok: true, value, errors: [] };
+    return { ok: true, value: isText(input.closing) ? { ...value, closing: input.closing } : value, errors: [] };
   }
 
   // Section override wins over global settings; only OVERRIDE_KEYS are applied.
